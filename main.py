@@ -1,15 +1,15 @@
 import subprocess
-import os
 import sys
 import requests
+import os
 try:
     from colorama import init, Fore, Style
 except ImportError:
-    print('[*] Colorama package is missing, downloding this package')
+    print('[*] Colorama package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'colorama'])
 
 
-#============colorama styles================
+#============ colorama styles ================
 init(autoreset=True)
 #=====colors======
 CYAN = Fore.CYAN
@@ -26,16 +26,24 @@ LIGHTYELLOW = Fore.YELLOW + Style.BRIGHT
 NORMAL = Style.NORMAL + Fore.WHITE
 
 
-#============version================
-LOCAL_VERSION = 1.1
+#============ version ================
+LOCAL_VERSION = 1.02
 
 
 
+#============ misc functions ============
+def CLEAR_TERMINAL():
+    if os.name == 'nt': #if are windows OS
+        os.system('cls')
+    else: #else are linux or mac OS
+        os.system('clear')
 
+
+#=========== features functions ============
 def CHECK_UPDATES():
     version_request = requests.get('https://raw.githubusercontent.com/ViniCezarioDEV/Zenlek-Console/main/version.json')
-    CURRENT_VERSION = float(version_request.json()['version'])
-    if LOCAL_VERSION < CURRENT_VERSION:
+    current_version = float(version_request.json()['version'])
+    if LOCAL_VERSION < current_version:
         print(f'{LIGHTCYAN}[*]{NORMAL} New update detected, downloading new version')
         update_url = 'https://raw.githubusercontent.com/ViniCezarioDEV/Zenlek-Console/main/main.py'
         new_code = requests.get(update_url)
@@ -46,7 +54,7 @@ def CHECK_UPDATES():
             input(f'{GREEN}[+]{NORMAL} New version downloaded successfully\n\nRe-open the application')
             sys.exit()
         else:
-            print(f'{RED}[-]{NORMAL} Error while downloding new version\n\nContinue using: {LOCAL_VERSION} version')
+            print(f'{RED}[-]{NORMAL} Error while downloading new version\n\nContinue using: {LOCAL_VERSION} version')
 
 
 
@@ -81,18 +89,23 @@ def INIT_INPUT():
     {LIGHTCYAN}PPM{NORMAL} Personal Password Manager
     {LIGHTCYAN}SSP{NORMAL} Show Personal Passwords''')
 
+    elif choice.lower() == 'aida':
+        AIDA_INIT()
 
 
-    """
-    if choice.lower() == 'spot':
-        try:
-            subprocess.run(["spotdl", link, "--log-level", "NOTSET", "--format", "mp3", "--bitrate", "320k"],
-                           check=True)
-            print(f'{LIGHTCYAN}[+]{NORMAL}Download completed with Success')
-        except FileNotFoundError as e:
-            print(f'{LIGHTCYAN}[*]{NORMAL} SpotDL package is missing, downloding this package')
-            subprocess.call([sys.executable, '-m', 'pip', 'install', 'spotdl'])
-    """
+
+
+def AIDA_INIT():
+    CLEAR_TERMINAL()
+    print('''
+    ░█████╗░██╗██████╗░░█████╗░
+    ██╔══██╗██║██╔══██╗██╔══██╗
+    ███████║██║██║░░██║███████║
+    ██╔══██║██║██║░░██║██╔══██║
+    ██║░░██║██║██████╔╝██║░░██║
+    ╚═╝░░╚═╝╚═╝╚═════╝░╚═╝░░╚═╝''')
+
+
 
 
 #======startup======
