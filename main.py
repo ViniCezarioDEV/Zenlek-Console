@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import requests
 
 try:
     from colorama import init, Fore, Style
@@ -9,6 +10,9 @@ except ImportError:
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'colorama'])
 
 
+#============version================
+VERSION = 1.1
+version_request = requests.get('https://github.com/vinicezariodev/zenlek-console/blob/main/version.json')
 
 
 #============colorama styles================
