@@ -1,6 +1,5 @@
 import subprocess
 import sys
-import requests
 import os
 import shutil
 import zipfile
@@ -14,17 +13,26 @@ try:
 except ImportError:
     print('[*] Colorama package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'colorama'])
+    from colorama import init, Fore, Style
 try:
     from youtube_search import YoutubeSearch
 except ImportError:
     print('[*] youtube-search package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'youtube-search'])
+    from youtube_search import YoutubeSearch
 try:
     from yt_dlp import YoutubeDL
 except ImportError:
     print('[*] yt-dlp package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'yt-dlp'])
+    from yt_dlp import YoutubeDL
 
+try:
+    import requests
+except ImportError:
+    print('[*] requests package is missing, downloading this package')
+    subprocess.call([sys.executable, '-m', 'pip', 'install', 'requests'])
+    import requests
 
 
 ffmpeg_installed = shutil.which("ffmpeg") is not None
