@@ -6,7 +6,9 @@ import zipfile
 import urllib.request
 import tarfile
 import platform
-import winreg
+
+if platform.system() == 'Windows':
+    import winreg
 
 try:
     from colorama import init, Fore, Style
