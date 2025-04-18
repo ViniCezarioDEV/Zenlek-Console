@@ -6,9 +6,20 @@ import zipfile
 import urllib.request
 import tarfile
 import platform
+import base64
+import hashlib
 
 if platform.system() == 'Windows':
     import winreg
+
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.fernet import InvalidToken
+except ImportError:
+    print('[*] cryptography package is missing, downloading this package')
+    subprocess.call([sys.executable, '-m', 'pip', 'install', 'cryptography'])
+    from cryptography.fernet import Fernet
+    from cryptography.fernet import InvalidToken
 
 try:
     from colorama import init, Fore, Style
@@ -126,7 +137,7 @@ NORMAL = Style.NORMAL + Fore.WHITE
 
 
 #============ version ================
-LOCAL_VERSION = 1.03
+LOCAL_VERSION = 1.04
 
 
 
@@ -137,7 +148,25 @@ def CLEAR_TERMINAL():
     else: #else are linux or mac OS
         os.system('clear')
 
+def STRING_TO_KEY(password, salt=None):
+    if salt is None:
+        salt = os.urandom(16)
+    hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
+    fernet_key = base64.urlsafe_b64encode(hash)
+    return fernet_key, salt
 
+def ENCRYPT(content, key):
+    fernet_key, salt = STRING_TO_KEY(key)
+    fernet = Fernet(fernet_key)
+    crypt_text = fernet.encrypt(content.encode())
+    return base64.urlsafe_b64encode(salt + crypt_text).decode()
+
+def DECRYPT(content, key):
+    data = base64.urlsafe_b64decode(content.encode())
+    salt, crypt_text = data[:16], data[16:]
+    fernet_key, _ = STRING_TO_KEY(key, salt)
+    fernet = Fernet(fernet_key)
+    return fernet.decrypt(crypt_text).decode()
 
 #=========== features functions ============
 def CHECK_UPDATES():
@@ -155,8 +184,6 @@ def CHECK_UPDATES():
             sys.exit()
         else:
             print(f'{RED}[-]{NORMAL} Error while downloading new version\n\nContinue using: {LOCAL_VERSION} version')
-
-
 
 def LOGO():
     print(f'''
