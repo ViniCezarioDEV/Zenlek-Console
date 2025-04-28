@@ -1,3 +1,4 @@
+import binascii
 import subprocess
 import sys
 import os
@@ -11,7 +12,6 @@ import hashlib
 
 if platform.system() == 'Windows':
     import winreg
-
 try:
     from cryptography.fernet import Fernet
     from cryptography.fernet import InvalidToken
@@ -20,7 +20,6 @@ except ImportError:
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'cryptography'])
     from cryptography.fernet import Fernet
     from cryptography.fernet import InvalidToken
-
 try:
     from colorama import init, Fore, Style
 except ImportError:
@@ -39,13 +38,18 @@ except ImportError:
     print('[*] yt-dlp package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'yt-dlp'])
     from yt_dlp import YoutubeDL
-
 try:
     import requests
 except ImportError:
     print('[*] requests package is missing, downloading this package')
     subprocess.call([sys.executable, '-m', 'pip', 'install', 'requests'])
     import requests
+try:
+    from pwinput import pwinput
+except ImportError:
+    print('[*] pwinput package is missing, downloading this package')
+    subprocess.call([sys.executable, '-m', 'pip', 'install', 'pwinput'])
+    from pwinput import pwinput
 
 
 ffmpeg_installed = shutil.which("ffmpeg") is not None
@@ -137,7 +141,7 @@ NORMAL = Style.NORMAL + Fore.WHITE
 
 
 #============ version ================
-LOCAL_VERSION = 1.04
+LOCAL_VERSION = 1.05
 
 
 
@@ -162,11 +166,23 @@ def ENCRYPT(content, key):
     return base64.urlsafe_b64encode(salt + crypt_text).decode()
 
 def DECRYPT(content, key):
-    data = base64.urlsafe_b64decode(content.encode())
-    salt, crypt_text = data[:16], data[16:]
-    fernet_key, _ = STRING_TO_KEY(key, salt)
-    fernet = Fernet(fernet_key)
-    return fernet.decrypt(crypt_text).decode()
+    try:
+        data = base64.urlsafe_b64decode(content.encode())
+        if len(data) < 16:  # Salt mínimo de 16 bytes.
+            raise ValueError("Encrypted data Invalid.")
+        salt, crypt_text = data[:16], data[16:]
+        fernet_key, _ = STRING_TO_KEY(key, salt)
+        fernet = Fernet(fernet_key)
+        return fernet.decrypt(crypt_text).decode()
+    except (binascii.Error, ValueError) as e:
+        print(f"Decrypt Error: {e}")
+        return None
+
+def PASSWORD():
+    #password = pwinput(mask='*', prompt='Password >>> ').strip()
+    password = input('Password >>> ').strip()
+    return password
+
 
 #=========== features functions ============
 def CHECK_UPDATES():
@@ -218,6 +234,17 @@ def INIT_INPUT():
 
     elif choice.lower() == 'aida':
         AIDA_INIT()
+
+    elif 'ssp' in choice:
+        results = SSP(choice)
+        if results:
+            for item in results:
+                print(item)
+
+    elif choice.lower() == 'ppm':
+        PPM()
+
+
 
 
 
@@ -398,9 +425,241 @@ def AIDA_CHANGE_FOLDER():
     AIDA_INPUT()
 
 
+def SSP(fulltext):
+    try:
+        if not os.path.exists('ppl.txt'):
+            with open('ppl.txt', 'w', encoding='utf-8') as f:
+                return []
+
+        with open('ppl.txt', 'r', encoding='utf-8') as f:
+            encrypted_lines = []
+            seen = set()
+            for line in f:
+                line = line.strip()
+                if line and line not in seen:
+                    seen.add(line)
+                    encrypted_lines.append(line)
+
+        commands = fulltext.split(' ')[1:]
+        if not commands:
+            return []
+
+        password = PASSWORD()
+        if not password:
+            return []
+
+        approved_services = []
+        seen_decrypted = set()
+
+        for encrypted in encrypted_lines:
+            try:
+                decrypted = DECRYPT(encrypted, password)
+                if decrypted and decrypted not in seen_decrypted:
+                    if all(cmd in decrypted for cmd in commands):
+                        approved_services.append(decrypted)
+                        seen_decrypted.add(decrypted)
+            except:
+                continue
+
+        return approved_services
+
+    except:
+        return []
+
+
+def PPM():
+    print('''
+       ___  ___  __ _ 
+      / _ \/ _ \/  ' \\
+     / .__/ .__/_/_/_/
+    /_/  /_/              
+                                ''')
+
+    print('''
+    [1] Add a new service
+    [2] Patch a service
+    [3] Delete a service
+    [4] Exit
+    ''')
+
+    while True:
+        choice = int(input('[PPM] Select an option >>> '))
+
+        match choice:
+            case 1:
+                PPM_ADD()
+            case 2:
+                PPM_PATCH()
+            case 3:
+                PPM_DELETE()
+            case 4:
+                input('[PPM] Bye. Press Enter to back')
+                break
+            case _:
+                print('[PPM] Invalid option')
+    CLEAR_TERMINAL()
+    LOGO()
+    INIT_INPUT()
+
+def PPM_ADD():
+    try:
+        text_parts = []
+        print('[PPM(add)] Type 99 to add')
+
+        while True:
+            desc = input('[PPM(add)] Description >>> ').strip()
+            if desc == '99':
+                break
+
+            value = input('[PPM(add)] Value >>> ').strip()
+            if not desc or not value:
+                print("Description and value cannot be empty")
+                continue
+
+            text_parts.append(f"{desc}:{value}|")
+
+        if not text_parts:
+            input('[PPM] No service added. Press Enter to back')
+            return
+        text = ''.join(text_parts)[:-1]
+
+        password = PASSWORD()
+        if not password:
+            return
+
+        encrypted_text = ENCRYPT(text, password)
+        if not encrypted_text:
+            input('[PPM] Failed to encrypt. Press Enter to back')
+            return
+
+        with open('ppl.txt', 'a', encoding='utf-8') as file:
+            file.write(encrypted_text + '\n')
+
+        input('[PPM] Service added. Press Enter to back')
+
+    except Exception as e:
+        print(f"PPM_ADD Error: {e}")
+        input('[PPM] Operation failed. Press Enter to back')
+
+def PPM_PATCH():
+    try:
+        password = PASSWORD()
+        if not password:
+            return
+
+        with open('ppl.txt', 'r', encoding='utf-8') as file:
+            lines = [line.strip() for line in file.readlines() if line.strip()]
+
+        decrypted_lines = []
+        for line in lines:
+            decrypted = DECRYPT(line, password)
+            if decrypted:
+                decrypted_lines.append(decrypted)
+            else:
+                print(f"Failed to decrypt line: {line[:20]}")
+                return
+
+        print('All Services')
+        for i, line in enumerate(decrypted_lines):
+            parts = line.split('|')
+            if len(parts) >= 2:
+                print(f'[{i + 1}] {parts[0]} | {parts[1]}')
+            else:
+                print(f'[{i + 1}] Invalid format: {line[:20]}')
+
+        try:
+            choice = int(input('\n[PPM] Which service want to change? ')) - 1
+            if choice < 0 or choice >= len(lines):
+                print("Invalid selection")
+                return
+        except ValueError:
+            print("Please enter a valid number")
+            return
+
+        print('[PPM] Type 99 to finish')
+        new_parts = []
+        while True:
+            desc = input('[PPM(modify)] New description: ').strip()
+            if desc == '99':
+                break
+            value = input('[PPM(modify)] New value: ').strip()
+            if not desc or not value:
+                print("Description and value cannot be empty")
+                continue
+            new_parts.append(f"{desc}:{value}")
+
+        if not new_parts:
+            print("No changes made")
+            return
+
+        new_text = "|".join(new_parts)
+        encrypted_text = ENCRYPT(new_text, password)
+        if not encrypted_text:
+            print("Failed to encrypt new entry")
+            return
+
+        lines[choice] = encrypted_text + '\n'
+        with open('ppl.txt', 'w', encoding='utf-8') as file:
+            file.writelines(lines)
+
+        input('[PPM] Service modified. Press Enter to back')
+
+    except Exception as e:
+        print(f"Error: {e}")
+        input('[PPM] Operation failed. Press Enter to back')
+
+def PPM_DELETE():
+    try:
+        password = PASSWORD()
+        if not password:
+            return
+
+        with open('ppl.txt', 'r', encoding='utf-8') as file:
+            lines = [line.strip() for line in file.readlines() if line.strip()]
+
+        decrypted_lines = []
+        for line in lines:
+            decrypted = DECRYPT(line, password)
+            if decrypted:
+                decrypted_lines.append(decrypted)
+            else:
+                print(f"Failed to decrypt line: {line[:20]}")
+                return
+
+        print('All Services')
+        for i, line in enumerate(decrypted_lines):
+            parts = line.split('|')
+            if len(parts) >= 2:
+                print(f'[{i + 1}] {parts[0]} | {parts[1]}')
+            else:
+                print(f'[{i + 1}] Invalid format: {line[:20]}')
+
+        try:
+            choice = int(input('\n[PPM] Which service want to delete? ')) - 1
+            if choice < 0 or choice >= len(lines):
+                print("Invalid selection")
+                return
+        except ValueError:
+            print("Please enter a valid number")
+            return
+
+        lines.pop(choice)
+        with open('ppl.txt', 'w', encoding='utf-8') as file:
+            file.writelines([line + '\n' for line in lines])
+
+        input('[PPM] Service deleted. Press Enter to back')
+
+    except Exception as e:
+        print(f"Error: {e}")
+        input('[PPM] Operation failed. Press Enter to back')
+
+
+
+
 
 
 #======startup======
+CLEAR_TERMINAL()
 LOGO()
 CHECK_UPDATES()
 while True:
