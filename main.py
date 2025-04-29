@@ -244,7 +244,9 @@ def INIT_INPUT():
     elif choice.lower() == 'ppm':
         PPM()
 
-
+    elif choice.lower() == 'clear':
+        CLEAR_TERMINAL()
+        LOGO()
 
 
 
@@ -468,6 +470,7 @@ def SSP(fulltext):
 
 
 def PPM():
+    CLEAR_TERMINAL()
     print('''
        ___  ___  __ _ 
       / _ \/ _ \/  ' \\

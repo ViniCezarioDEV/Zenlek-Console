@@ -3,3 +3,4 @@ test.py
 .gitignore
 ppl.txt
 ffmpeg_bin/
+howToVenv.txt
