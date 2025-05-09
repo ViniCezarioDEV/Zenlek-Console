@@ -4,3 +4,4 @@ test.py
 ppl.txt
 ffmpeg_bin/
 howToVenv.txt
+.venv/
