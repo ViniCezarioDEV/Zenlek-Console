@@ -141,7 +141,7 @@ NORMAL = Style.NORMAL + Fore.WHITE
 
 
 #============ version ================
-LOCAL_VERSION = 1.05
+LOCAL_VERSION = 1.06
 
 
 
@@ -179,8 +179,7 @@ def DECRYPT(content, key):
         return None
 
 def PASSWORD():
-    #password = pwinput(mask='*', prompt='Password >>> ').strip()
-    password = input('Password >>> ').strip()
+    password = pwinput(mask='*', prompt='Password >>> ').strip()
     return password
 
 
